@@ -8,9 +8,6 @@ vaultdb_url = strcat('http://vault.titlekeys.ovh/',vaultdb_name);
 websave(vaultdb_name,vaultdb_url);
 % unzip vaultdb
 untar(vaultdb_name);
-% delete json folder and tar
-rmdir 'json' s
-delete(vaultdb_name);
 % change name to 'ticket' to a region
 movefile('ticket','EUR');
 % change pwd
