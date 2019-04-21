@@ -1,7 +1,9 @@
 # tikdb
-A simple script to obtain a zip to be put into WiiU USB Helper
-## Requirements
-The script is built with Matlab 2018b, so you will require Matlab (paid or free if you're an academic or researcher) or [Matlab Runtime](https://mathworks.com/products/compiler/matlab-runtime.html) (it's free) for Matlab 2018b or higher in order to run it.
+A simple script to obtain a zip to be put into WiiU USB Helper.
 ## Guide
-Just run the script into the console; after a while, a zip called `tikdb.zip` will be created.
-This zip must be drag-n-dropped into WiiU USB Helper screen (when it asks about _that site_, down below there's a switch to `alternate method`; just press it and drag-n-drop your zip.
+- If you're gonna use the script (`tikdb.m`), then you need Matlab (paid, or free if you're an academic or researcher);
+- If you're gonna use the executable (`tikdb_installer.exe`, just for Windows right now), then you just need to start the installer and let it download the Matlab Runtime mandatory for using the script.
+
+A Python version is coming (ETA: -1 hour).
+
+By the way the exe is fine, it's made with Matlab Compiler, but if you don't trust it you can check it out with VirusTotal [here](https://www.virustotal.com/gui/file/9a07bc4b68231dfd8a79ac1583fec87fcf5d3cd3f927d3cb877e601f9d8ececc/detection) or your antivirus.
