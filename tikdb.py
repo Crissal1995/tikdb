@@ -7,7 +7,7 @@ import urllib.request
 # so for now no jap games
 
 # setup temp folder
-layers = 0
+root = pathlib.Path(os.getcwd())
 tmpfold = "tikdb_tmpfold"
 try:
     os.mkdir(tmpfold)
@@ -16,7 +16,6 @@ except OSError:
     shutil.rmtree(tmpfold,True)
     os.mkdir(tmpfold)
 os.chdir(tmpfold) # cwd: tmpfold
-layers = 1
 
 # setup agent crawlers
 opener = urllib.request.build_opener()
@@ -87,12 +86,11 @@ def download_tickets():
         tar = tarfile.open(vaultdb)
         tar.extractall()
         os.chdir('ticket') # cwd: tmpfold/ticket
-        return 2
     
-    return download_tickets_from_vault()
+    download_tickets_from_vault()
 
 print('Downloading tickets...')
-layers = download_tickets()
+download_tickets()
 print('Tickets downloaded')
 
 # make region folders
@@ -128,7 +126,7 @@ for tik in glob.glob('*.tik'):
 # all tickets moved into folders, time to zip
 def zipdir(path, ziph):
     # ziph is zipfile handle
-    for root, dirs, files in os.walk(path):
+    for root, _, files in os.walk(path):
         for file in files:
             ziph.write(os.path.join(root, file))
 
@@ -140,8 +138,7 @@ zipf.close()
 print('Zip file created')
 
 # move zip into root and clean up
-root = '../' * layers
-shutil.move('tikdb.zip', root + 'tikdb.zip')
+shutil.move('tikdb.zip', root / 'tikdb.zip')
 os.chdir(root)
 shutil.rmtree(tmpfold,True)
 
