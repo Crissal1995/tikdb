@@ -7,8 +7,7 @@ from bs4 import BeautifulSoup
 # setup temp folder
 root = pathlib.Path(os.getcwd())
 tmpfold = root / "tikdb_tmpfold"
-try:
-    os.mkdir(tmpfold)
+try: os.mkdir(tmpfold)
 except OSError:
     print("[WARNING] Temp folder already created...")
     shutil.rmtree(tmpfold,True)
@@ -25,13 +24,12 @@ def parse_titledb():
         quit()
     soup = BeautifulSoup(r.text, 'html.parser')
     text = re.sub("[\":]+",'',soup.get_text())
-    #text = soup.get_text()
     titles = []; names = []; regions = []
     title_pattern = re.compile(r'0005000\w-\w{8}')
     name_pattern = re.compile(r'\S([^\n]*)')
-    second_name_pattern = re.compile(r'(?<=\n)\w[^(WUP)\n\d]+', re.I)
+    second_name_pattern = re.compile(r'(?<=\n)\w[^\n\d](^WUP)+', re.I)
     fix_name_pattern = re.compile(r'[\\/:"*?<>|]+')
-    reg_pattern = re.compile('(EUR)|(JAP)|(JPN)|(USA)', re.I)
+    reg_pattern = re.compile('(EUR)|(JAP)|(JPN)|(USA)|(ALL)', re.I)
     result = title_pattern.search(text,0)
     while result is not None:
         start_title, end_title = result.span()
@@ -54,16 +52,13 @@ def parse_titledb():
             continue
         start_reg, end_reg = result.span()
         region = (text[start_reg:end_reg]).upper()
-        # parse possible second line name, looking at you Botw
+        # parse possible second line name
         result = second_name_pattern.search(text,end_name,start_reg)
         if result is not None:
             start_sec_name, end_sec_name = result.span()
             name = name + ' ' + text[start_sec_name:end_sec_name]
-            if name.lower() in 'the legend of zelda breath of the ':
-                name = name + 'wild'
         # fix name for win folders
         name = fix_name_pattern.sub('',name)
-        name = name.strip()
         # fix JAP region
         if region == 'JAP': region = 'JPN'
         # save title parsed
@@ -85,7 +80,6 @@ def download_tickets():
         url = "http://vault.titlekeys.ovh/" + vaultdb
         r = requests.get(url)
         open(vaultdb, 'wb').write(r.content)
-        #urllib.request.urlretrieve(url,vaultdb)
         tar = tarfile.open(vaultdb)
         tar.extractall()
         os.chdir('ticket') # cwd: tmpfold/ticket
@@ -110,17 +104,26 @@ for reg in regs:
 for tik in glob.glob('*.tik'):
     tik_name = tik.replace('.tik','').upper()
     try: index = titles.index(tik_name)
-    except ValueError: continue # no game
+    except ValueError: continue # discard ticket [no game/upd/dlc]
     name = names[index]
     region = regions[index]
-    reg_path = pathlib.Path(region)
-    name_path = reg_path / name
-    print(name_path)
-    title_path = name_path / tik_name
-    try: os.mkdir(name_path) # same game can have multiple folders (dlcs and updates)
-    except OSError: pass
-    os.mkdir(title_path)
-    os.rename(tik, title_path / 'title.tik')
+    if region == 'ALL': # 'all' region
+        for reg in regs:
+            reg_path = pathlib.Path(reg)
+            name_path = reg_path / name
+            title_path = name_path / tik_name
+            try: os.mkdir(name_path) # same game can have multiple folders (dlcs and updates)
+            except FileExistsError: pass
+            os.mkdir(title_path)
+            shutil.copyfile(tik, title_path / 'title.tik')
+    else: # single region
+        reg_path = pathlib.Path(region)
+        name_path = reg_path / name
+        title_path = name_path / tik_name
+        try: os.mkdir(name_path) # same game can have multiple folders (dlcs and updates)
+        except FileExistsError: pass
+        os.mkdir(title_path)
+        os.rename(tik, title_path / 'title.tik')
 
 # all tickets moved into folders, time to zip
 def zipdir(path, ziph):
