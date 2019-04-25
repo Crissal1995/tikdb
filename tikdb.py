@@ -4,19 +4,20 @@ import tarfile, zipfile
 import requests
 from bs4 import BeautifulSoup
 
-# setup temp folder
-root = pathlib.Path(os.getcwd())
-tmpfold = root / "tikdb_tmpfold"
+# setup struct for tids
 base_titleid = '0005000'
 titleids = {
     'game'  :   base_titleid + '0',
     'demo'  :   base_titleid + '2',
     'dlc'   :   base_titleid + 'C',
-    'update':   base_titleid + 'E'
-}
+    'update':   base_titleid + 'E'}
+
+# setup temp folder
+root = pathlib.Path(os.getcwd())
+tmpfold = root / "tikdb_tmpfold"
 try: os.mkdir(tmpfold)
 except FileExistsError:
-    print("[WARNING] Temp folder already created...")
+    print("[WARNING] Temp folder was already created")
     shutil.rmtree(tmpfold,True)
     os.mkdir(tmpfold)
 os.chdir(tmpfold) # cwd: tmpfold
@@ -26,9 +27,9 @@ def parse_titledb():
     url = 'https://wiiubrew.org/wiki/Title_database'
     r = requests.get(url,timeout=60)
     if r.status_code != 200:
-        print('Cannot connect to title database! Quitting...')
+        print('Cannot connect to WiiuBrew title database!')
         shutil.rmtree(tmpfold,True)
-        quit()
+        raise requests.HTTPError
     soup = BeautifulSoup(r.text, 'html.parser')
     text = re.sub("[\":]+",'',soup.get_text())
     titles = []; names = []; regions = []
@@ -78,7 +79,7 @@ def parse_titledb():
     return titles, names, regions
 
 # fix names (different names for same game+upd+dlc)
-def fix_names(names, titles):
+def fix_names(titles, names, regions):
     for index,_ in enumerate(names):
         titleid = titles[index]
         type_titleid = titleid[:8]
@@ -87,10 +88,11 @@ def fix_names(names, titles):
             try: game_idx = titles.index(titleids['game'] + gameid)
             except ValueError: continue # no game linked to upd/dlc
             names[index] = names[game_idx]
+            regions[index] = regions[game_idx]
 
 print('Parsing titledb...')
 titles, names, regions = parse_titledb()
-fix_names(names, titles)
+fix_names(titles, names, regions)
 print('Titledb parsed')
 
 # download ticket db
@@ -99,6 +101,10 @@ def download_tickets():
         vaultdb = "vault.tar.gz"
         url = "http://vault.titlekeys.ovh/" + vaultdb
         r = requests.get(url)
+        if r.status_code != 200:
+            print(f'Cannot download {vaultdb}!')
+            shutil.rmtree(tmpfold,True)
+            raise requests.HTTPError
         open(vaultdb, 'wb').write(r.content)
         tar = tarfile.open(vaultdb)
         tar.extractall()
@@ -109,7 +115,9 @@ def download_tickets():
             tiks = [x for x in files if '.tik' in x]
             if len(tiks) != 0:
                 os.chdir(dirpath)
-                break
+                return
+        # if here, no tik found
+        raise ValueError(f'Cannot find any tik files in {vaultdb}!')
     
     download_tickets_from_vault()
 
@@ -122,7 +130,7 @@ regs = ['EUR','USA','JPN']
 for reg in regs:
     try: os.mkdir(reg)
     except FileExistsError:
-        print("[WARNING] " + reg + " folder already created...")
+        print(f"[WARNING] {reg} folder was already created")
         shutil.rmtree(reg,True)
         os.mkdir(reg)
 
