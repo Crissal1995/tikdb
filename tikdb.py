@@ -8,7 +8,7 @@ from bs4 import BeautifulSoup
 root = pathlib.Path(os.getcwd())
 tmpfold = root / "tikdb_tmpfold"
 try: os.mkdir(tmpfold)
-except OSError:
+except FileExistsError:
     print("[WARNING] Temp folder already created...")
     shutil.rmtree(tmpfold,True)
     os.mkdir(tmpfold)
@@ -41,14 +41,14 @@ def parse_titledb():
         # parse name
         result = name_pattern.search(text,end_title,next_title)
         if result is None: 
-            result = title_pattern.search(text,next_title)
+            result = next_title_result
             continue
         start_name, end_name = result.span()
         name = text[start_name:end_name]
         # parse region
         result = reg_pattern.search(text,end_name,next_title)
         if result is None: 
-            result = title_pattern.search(text,next_title)
+            result = next_title_result
             continue
         start_reg, end_reg = result.span()
         region = (text[start_reg:end_reg]).upper()
@@ -82,7 +82,14 @@ def download_tickets():
         open(vaultdb, 'wb').write(r.content)
         tar = tarfile.open(vaultdb)
         tar.extractall()
-        os.chdir('ticket') # cwd: tmpfold/ticket
+        tar.close()
+        os.remove(vaultdb)
+        # search for tickets
+        for dirpath, _, files in os.walk(tmpfold):
+            tiks = [x for x in files if '.tik' in x]
+            if len(tiks) != 0:
+                os.chdir(dirpath)
+                break
     
     download_tickets_from_vault()
 
@@ -93,9 +100,8 @@ print('Tickets downloaded')
 # make region folders
 regs = ['EUR','USA','JPN']
 for reg in regs:
-    try:
-        os.mkdir(reg)
-    except OSError:
+    try: os.mkdir(reg)
+    except FileExistsError:
         print("[WARNING] " + reg + " folder already created...")
         shutil.rmtree(reg,True)
         os.mkdir(reg)
@@ -123,7 +129,8 @@ for tik in glob.glob('*.tik'):
         try: os.mkdir(name_path) # same game can have multiple folders (dlcs and updates)
         except FileExistsError: pass
         os.mkdir(title_path)
-        os.rename(tik, title_path / 'title.tik')
+        shutil.copyfile(tik, title_path / 'title.tik')
+        #os.rename(tik, title_path / 'title.tik')
 
 # all tickets moved into folders, time to zip
 def zipdir(path, ziph):
