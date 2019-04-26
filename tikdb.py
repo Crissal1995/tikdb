@@ -29,20 +29,24 @@ def parse_titledb():
     text = r.text
     titles = []; names = []; regions = []
     # compiling regex for speed
-    title_pattern = re.compile(base_titleid + r'\w-\w{8}')
+    title_pattern = re.compile(base_titleid + r'\w-\w{8}', re.I)
     name_pattern = re.compile(r'(?<=<td>)[^\n]*')
     fix_name_pattern = re.compile(r'[\\/:"*?<>|]+')
     reg_pattern = re.compile(r'(?<=<td>)(EUR)|(JAP)|(JPN)|(USA)|(ALL)', re.I)
     # first search
     result = title_pattern.search(text,0)
     while result is not None:
-        # parse title
         start_title, end_title = result.span()
-        title = text[start_title:end_title].upper().replace('-','')
         # search for the next title (end limiter)
         next_title_result = title_pattern.search(text,end_title)
         if next_title_result is None: next_title_start = len(text)
         else: next_title_start, _ = next_title_result.span()
+        # parse title
+        title = text[start_title:end_title].upper().replace('-','')
+        # check if title is valid, otherwise skip it
+        if title[:8] not in titleids.values():
+            result = next_title_result
+            continue
         # parse name
         result = name_pattern.search(text,end_title,next_title_start)
         if result is None: 
