@@ -104,9 +104,8 @@ def download_tickets():
         tar.close()
         os.remove(vaultdb)
         # search for tickets
-        
         for dirpath, _, files in os.walk(tmpfold):
-            tiks = [x for x in files if x[-4:].lower() == '.tik']
+            tiks = glob.glob(os.path.join(dirpath,'*.tik'))
             if len(tiks) != 0:
                 os.chdir(dirpath)
                 return
