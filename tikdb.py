@@ -2,15 +2,13 @@ import os, glob, pathlib, shutil
 import re
 import tarfile, zipfile
 import requests
-from bs4 import BeautifulSoup
 
 # setup struct for tids
 base_titleid = '0005000'
-titleids = {
-    'game'  :   base_titleid + '0',
-    'demo'  :   base_titleid + '2',
-    'dlc'   :   base_titleid + 'C',
-    'update':   base_titleid + 'E'}
+titleids = {'game': base_titleid + '0',
+            'demo': base_titleid + '2',
+            'dlc': base_titleid + 'C',
+            'update': base_titleid + 'E' }
 
 # setup temp folder
 root = pathlib.Path(os.getcwd())
@@ -24,26 +22,24 @@ os.chdir(tmpfold) # cwd: tmpfold
 
 # download titledb
 def parse_titledb():
-    url = 'https://wiiubrew.org/wiki/Title_database'
-    r = requests.get(url,timeout=60)
+    url = 'https://raw.githubusercontent.com/Crissal1995/tikdb/master/titledbs/wiiubrew'
+    r = requests.get(url)
     if r.status_code != 200:
-        print('Cannot connect to WiiuBrew title database!')
-        shutil.rmtree(tmpfold,True)
-        raise requests.HTTPError
-    soup = BeautifulSoup(r.text, 'html.parser')
-    text = re.sub("[\":]+",'',soup.get_text())
+        raise requests.HTTPError('Cannot connect to title database!')
+    text = r.text
     titles = []; names = []; regions = []
+    # compiling regex for speed
     title_pattern = re.compile(base_titleid + r'\w-\w{8}')
-    name_pattern = re.compile(r'\S([^\n]*)')
-    second_name_pattern = re.compile(r'(?<=\n)\w[^\n\d](^WUP)+', re.I)
+    name_pattern = re.compile(r'(?<=<td>)[^\n]*')
     fix_name_pattern = re.compile(r'[\\/:"*?<>|]+')
-    reg_pattern = re.compile('(EUR)|(JAP)|(JPN)|(USA)|(ALL)', re.I)
+    reg_pattern = re.compile(r'(?<=<td>)(EUR)|(JAP)|(JPN)|(USA)|(ALL)', re.I)
+    # first search
     result = title_pattern.search(text,0)
     while result is not None:
         # parse title
         start_title, end_title = result.span()
         title = text[start_title:end_title].upper().replace('-','')
-        # search for the next title (limiter)
+        # search for the next title (end limiter)
         next_title_result = title_pattern.search(text,end_title)
         if next_title_result is None: next_title_start = len(text)
         else: next_title_start, _ = next_title_result.span()
@@ -61,11 +57,6 @@ def parse_titledb():
             continue
         start_reg, end_reg = result.span()
         region = text[start_reg:end_reg].upper()
-        # parse possible second line name
-        result = second_name_pattern.search(text,end_name,start_reg)
-        if result is not None:
-            start_sec_name, end_sec_name = result.span()
-            name = name + ' ' + text[start_sec_name:end_sec_name]
         # fix name for win folders
         name = fix_name_pattern.sub('',name)
         # fix JAP region
@@ -80,7 +71,7 @@ def parse_titledb():
 
 # fix names (different names for same game+upd+dlc)
 def fix_names(titles, names, regions):
-    for index,_ in enumerate(names):
+    for index, _ in enumerate(names):
         titleid = titles[index]
         type_titleid = titleid[:8]
         gameid = titleid[8:]
@@ -102,17 +93,16 @@ def download_tickets():
         url = "http://vault.titlekeys.ovh/" + vaultdb
         r = requests.get(url)
         if r.status_code != 200:
-            print(f'Cannot download {vaultdb}!')
-            shutil.rmtree(tmpfold,True)
-            raise requests.HTTPError
+            raise requests.HTTPError(f'Cannot download {vaultdb}!')            
         open(vaultdb, 'wb').write(r.content)
         tar = tarfile.open(vaultdb)
         tar.extractall()
         tar.close()
         os.remove(vaultdb)
         # search for tickets
+        
         for dirpath, _, files in os.walk(tmpfold):
-            tiks = [x for x in files if '.tik' in x]
+            tiks = [x for x in files if x[-4:].lower() == '.tik']
             if len(tiks) != 0:
                 os.chdir(dirpath)
                 return
@@ -168,11 +158,16 @@ print('Titles matched')
 def zipdir(path, ziph):
     for dir, _, files in os.walk(path):
         for file in files:
-            ziph.write(os.path.join(dir, file))
+            ziph.write(os.path.join(dir, file)) 
 
 print('Creating zip file...')
 zipname = 'tikdb.zip'
-zipf = zipfile.ZipFile(zipname, 'w', zipfile.ZIP_DEFLATED)
+try: 
+    import zlib
+    comp = zipfile.ZIP_DEFLATED
+except ImportError:
+    comp = zipfile.ZIP_STORED
+zipf = zipfile.ZipFile(zipname, 'w', compression=comp)
 for reg in regs:
     zipdir(reg,zipf)
 zipf.close()
