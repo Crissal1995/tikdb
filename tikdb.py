@@ -97,7 +97,7 @@ def download_tickets():
         url = "http://vault.titlekeys.ovh/" + vaultdb
         r = requests.get(url)
         if r.status_code != 200:
-            raise requests.HTTPError(f'Cannot download {vaultdb}!')            
+            raise requests.HTTPError('Cannot download {}!'.format(vaultdb))            
         open(vaultdb, 'wb').write(r.content)
         tar = tarfile.open(vaultdb)
         tar.extractall()
@@ -110,7 +110,7 @@ def download_tickets():
                 os.chdir(dirpath)
                 return
         # if here, no tik found
-        raise ValueError(f'Cannot find any tik files in {vaultdb}!')
+        raise ValueError('Cannot find any tik files in {}!'.format(vaultdb))
     
     download_tickets_from_vault()
 
