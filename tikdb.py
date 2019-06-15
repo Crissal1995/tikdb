@@ -137,26 +137,28 @@ for reg in regs:
 
 # find matches
 def match_tiks():
-    def doit(a_region: str, a_name: str, a_tik_name: str):
-        reg_path = pathlib.Path(a_region)
-        name_path = reg_path / a_name
-        title_path = name_path / a_tik_name
-        try: os.mkdir(name_path) # same game can have multiple folders (dlcs and updates)
+    def doit(region_game: str, game_name: str, tik_upper: str, tik_original: str):
+        os.chdir(region_game) # (tiks)/(REG)/
+        try: os.mkdir(game_name) # same game can have multiple folders (dlcs and updates)
         except FileExistsError: pass
-        os.mkdir(title_path)
-        shutil.copyfile(tik, title_path / 'title.tik')
-    
+        os.chdir(game_name) # (tiks)/REG/game_name/
+        try: os.mkdir(tik_upper)
+        except FileExistsError: return
+        os.chdir('../..') # (tiks)/
+        title_path = pathlib.Path(region_game) / game_name / tik_upper
+        shutil.copyfile(tik_original, title_path / 'title.tik')
+
     for tik in glob.glob('*.tik'):
         tik_name = tik.replace('.tik','').upper()
         try: index = titles.index(tik_name)
-        except ValueError: continue # discard ticket [no game/upd/dlc]
+        except ValueError: continue
         name = names[index]
         region = regions[index]
         if region == 'ALL': # 'ALL' region
-            for reg in regs:
-                doit(reg, name, tik_name)
+            for region in regs:
+                doit(region, name, tik_name, tik)
         else: # single region
-            doit(region, name, tik_name)
+            doit(region, name, tik_name, tik)
 
 print('Matching titles...')
 match_tiks()
