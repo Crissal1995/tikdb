@@ -6,9 +6,10 @@ python:
   - '3.6'
 
 install:
-  - pip install requests
+  - pip install requests coverage
 
 script: python tikdb.py
 
 after_success:
+  - coverage run tikdb.py
   - codecov

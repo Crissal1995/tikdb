@@ -11,7 +11,7 @@ status:
   project: yes
   patch: yes
   changes: no
-  
+
 comment:
   layout: “reach, diff, flags, files, footer”
   behavior: default
