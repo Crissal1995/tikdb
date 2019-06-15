@@ -12,13 +12,16 @@ titleids = {'game': base_titleid + '0',
 
 # setup temp folder
 root = pathlib.Path(os.getcwd())
+root_abs = str(root.resolve())
 tmpfold = root / "tikdb_tmpfold"
-try: os.mkdir(tmpfold)
+tmpfold_abs = str(tmpfold.resolve())
+try: 
+    os.mkdir(tmpfold_abs)
 except FileExistsError:
     print("[WARNING] Temp folder was already created")
     shutil.rmtree(tmpfold,True)
-    os.mkdir(tmpfold)
-os.chdir(tmpfold) # cwd: tmpfold
+    os.mkdir(tmpfold_abs)
+os.chdir(tmpfold_abs) # cwd: tmpfold
 
 # download titledb
 def parse_titledb():
@@ -95,7 +98,10 @@ def download_tickets():
     def download_tickets_from_vault():
         vaultdb = "vault.tar.gz"
         url = "http://vault.titlekeys.ovh/" + vaultdb
-        r = requests.get(url)
+        try:
+            r = requests.get(url)
+        except requests.exceptions.ConnectionError:
+            raise requests.HTTPError('Cannot connect to {}, the site don\'t exist!'.format(url))
         if r.status_code != 200:
             raise requests.HTTPError('Cannot download {}!'.format(vaultdb))            
         open(vaultdb, 'wb').write(r.content)
@@ -123,12 +129,23 @@ regs = ['EUR','USA','JPN']
 for reg in regs:
     try: os.mkdir(reg)
     except FileExistsError:
-        print("[WARNING] {} folder was already created".format(reg))
+        print('[WARNING] {} folder was already created'.format(reg))
         shutil.rmtree(reg,True)
         os.mkdir(reg)
 
 # find matches
 def match_tiks():
+    def doit(region: str, name: str, tik_name: str):
+        reg_path = pathlib.Path(region)
+        name_path = reg_path / name
+        name_path_abs = str(name_path.resolve())
+        title_path = name_path / tik_name
+        title_path_abs = str(title_path.resolve())
+        try: os.mkdir(name_path_abs) # same game can have multiple folders (dlcs and updates)
+        except FileExistsError: pass
+        os.mkdir(title_path_abs)
+        shutil.copyfile(tik, title_path / 'title.tik')
+    
     for tik in glob.glob('*.tik'):
         tik_name = tik.replace('.tik','').upper()
         try: index = titles.index(tik_name)
@@ -137,47 +154,38 @@ def match_tiks():
         region = regions[index]
         if region == 'ALL': # 'ALL' region
             for reg in regs:
-                reg_path = pathlib.Path(reg)
-                name_path = reg_path / name
-                title_path = name_path / tik_name
-                try: os.mkdir(name_path) # same game can have multiple folders (dlcs and updates)
-                except FileExistsError: pass
-                os.mkdir(title_path)
-                shutil.copyfile(tik, title_path / 'title.tik')
+                doit(reg, name, tik_name)
         else: # single region
-            reg_path = pathlib.Path(region)
-            name_path = reg_path / name
-            title_path = name_path / tik_name
-            try: os.mkdir(name_path) # same game can have multiple folders (dlcs and updates)
-            except FileExistsError: pass
-            os.mkdir(title_path)
-            shutil.copyfile(tik, title_path / 'title.tik')
+            doit(region, name, tik_name)
 
 print('Matching titles...')
 match_tiks()
 print('Titles matched')
 
-# all tickets moved into folders, time to zip
-def zipdir(path, ziph):
-    for dir, _, files in os.walk(path):
-        for file in files:
-            ziph.write(os.path.join(dir, file)) 
+def zip_all(zipname: str):
+    def zipdir(path, ziph):
+        for dir, _, files in os.walk(path):
+            for file in files:
+                ziph.write(os.path.join(dir, file)) 
+    try: 
+        import zlib
+        comp = zipfile.ZIP_DEFLATED
+    except ImportError:
+        comp = zipfile.ZIP_STORED
+    zipf = zipfile.ZipFile(zipname, 'w', compression=comp)
+    for reg in regs:
+        zipdir(reg,zipf)
+    zipf.close()
+    
 
 print('Creating zip file...')
 zipname = 'tikdb.zip'
-try: 
-    import zlib
-    comp = zipfile.ZIP_DEFLATED
-except ImportError:
-    comp = zipfile.ZIP_STORED
-zipf = zipfile.ZipFile(zipname, 'w', compression=comp)
-for reg in regs:
-    zipdir(reg,zipf)
-zipf.close()
+zip_all(zipname)
 print('Zip file created')
 
+print('Cleaning...')
 # move zip into root and clean up
 shutil.move(zipname, root / zipname)
-os.chdir(root)
+os.chdir(root_abs)
 shutil.rmtree(tmpfold,True)
-print('Done')
+print('Done - Goodbye!')
