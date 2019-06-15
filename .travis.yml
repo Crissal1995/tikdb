@@ -1,7 +1,14 @@
-# linguaggio scelto
 language: python
-# prerequisiti
+
+python:
+  - '3.4'
+  - '3.5'
+  - '3.6'
+
 install:
   - pip install requests
-# script da eseguire
+
 script: python tikdb.py
+
+after_success:
+  - codecov
