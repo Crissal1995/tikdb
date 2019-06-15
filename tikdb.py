@@ -145,8 +145,8 @@ def match_tiks():
         try: os.mkdir(tik_upper)
         except FileExistsError: return
         os.chdir('../..') # (tiks)/
-        title_path = pathlib.Path(region_game) / game_name / tik_upper
-        shutil.copyfile(tik_original, title_path / 'title.tik')
+        title_path = os.path.normpath(region_game + '/' + game_name + '/' + tik_upper)
+        shutil.copyfile(tik_original, os.path.join(title_path, 'title.tik') )
 
     for tik in glob.glob('*.tik'):
         tik_name = tik.replace('.tik','').upper()
