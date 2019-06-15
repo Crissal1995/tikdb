@@ -4,3 +4,5 @@ tikdb_tmpfold/
 vault.tar.gz
 # zip created
 tikdb.zip
+.coverage
+coverage.xml
