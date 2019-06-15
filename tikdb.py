@@ -12,16 +12,14 @@ titleids = {'game': base_titleid + '0',
 
 # setup temp folder
 root = pathlib.Path(os.getcwd())
-root_abs = str(root.resolve())
-tmpfold = root / "tikdb_tmpfold"
-tmpfold_abs = str(tmpfold.resolve())
+tmpfold = "tikdb_tmpfold"
 try: 
-    os.mkdir(tmpfold_abs)
+    os.mkdir(tmpfold)
 except FileExistsError:
     print("[WARNING] Temp folder was already created")
     shutil.rmtree(tmpfold,True)
-    os.mkdir(tmpfold_abs)
-os.chdir(tmpfold_abs) # cwd: tmpfold
+    os.mkdir(tmpfold)
+os.chdir(tmpfold) # cwd: tmpfold
 
 # download titledb
 def parse_titledb():
@@ -30,7 +28,7 @@ def parse_titledb():
     if r.status_code != 200:
         raise requests.HTTPError('Cannot connect to title database!')
     text = r.text
-    titles = []; names = []; regions = []
+    _titles = []; _names = []; _regions = []
     # compiling regex for speed
     title_pattern = re.compile(base_titleid + r'\w-\w{8}', re.I)
     name_pattern = re.compile(r'(?<=<td>)[^\n]*')
@@ -69,24 +67,24 @@ def parse_titledb():
         # fix JAP region
         if region == 'JAP': region = 'JPN'
         # save title parsed
-        titles.append(title)
-        names.append(name)
-        regions.append(region)
+        _titles.append(title)
+        _names.append(name)
+        _regions.append(region)
         # get another title
         result = next_title_result
-    return titles, names, regions
+    return _titles, _names, _regions
 
 # fix names (different names for same game+upd+dlc)
-def fix_names(titles, names, regions):
-    for index, _ in enumerate(names):
-        titleid = titles[index]
+def fix_names(_titles, _names, _regions):
+    for index, _ in enumerate(_names):
+        titleid = _titles[index]
         type_titleid = titleid[:8]
         gameid = titleid[8:]
         if type_titleid in [titleids['dlc'],titleids['update']]:
-            try: game_idx = titles.index(titleids['game'] + gameid)
+            try: game_idx = _titles.index(titleids['game'] + gameid)
             except ValueError: continue # no game linked to upd/dlc
-            names[index] = names[game_idx]
-            regions[index] = regions[game_idx]
+            _names[index] = _names[game_idx]
+            _regions[index] = _regions[game_idx]
 
 print('Parsing titledb...')
 titles, names, regions = parse_titledb()
@@ -110,15 +108,19 @@ def download_tickets():
         tar.close()
         os.remove(vaultdb)
         # search for tickets
-        for dirpath, _, files in os.walk(tmpfold):
+        for dirpath, _, files in os.walk(os.getcwd()):
             tiks = glob.glob(os.path.join(dirpath,'*.tik'))
-            if len(tiks) != 0:
+            if tiks: # len(tiks) > 0
                 os.chdir(dirpath)
                 return
         # if here, no tik found
         raise ValueError('Cannot find any tik files in {}!'.format(vaultdb))
     
-    download_tickets_from_vault()
+    try:
+        download_tickets_from_vault()
+    except ValueError:
+        print('Cannot download tickets!')
+        quit(1)
 
 print('Downloading tickets...')
 download_tickets()
@@ -130,20 +132,19 @@ for reg in regs:
     try: os.mkdir(reg)
     except FileExistsError:
         print('[WARNING] {} folder was already created'.format(reg))
-        shutil.rmtree(reg,True)
+        shutil.rmtree(reg, ignore_errors=True)
         os.mkdir(reg)
 
 # find matches
 def match_tiks():
-    def doit(region: str, name: str, tik_name: str):
-        reg_path = pathlib.Path(region)
-        name_path = reg_path / name
-        name_path_abs = str(name_path.resolve())
-        title_path = name_path / tik_name
-        title_path_abs = str(title_path.resolve())
-        try: os.mkdir(name_path_abs) # same game can have multiple folders (dlcs and updates)
-        except FileExistsError: pass
-        os.mkdir(title_path_abs)
+    def doit(a_region: str, a_name: str, a_tik_name: str):
+        reg_path = pathlib.Path(a_region)
+        name_path = reg_path / a_name
+        title_path = name_path / a_tik_name
+        # try: os.mkdir(name_path) # same game can have multiple folders (dlcs and updates)
+        # except FileExistsError: pass
+        # os.mkdir(title_path)
+        os.makedirs(title_path)
         shutil.copyfile(tik, title_path / 'title.tik')
     
     for tik in glob.glob('*.tik'):
@@ -162,21 +163,20 @@ print('Matching titles...')
 match_tiks()
 print('Titles matched')
 
-def zip_all(zipname: str):
+def zip_all(_zipname: str):
     def zipdir(path, ziph):
-        for dir, _, files in os.walk(path):
+        for directory, _, files in os.walk(path):
             for file in files:
-                ziph.write(os.path.join(dir, file)) 
+                ziph.write(os.path.join(directory, file))
     try: 
         import zlib
         comp = zipfile.ZIP_DEFLATED
     except ImportError:
         comp = zipfile.ZIP_STORED
-    zipf = zipfile.ZipFile(zipname, 'w', compression=comp)
-    for reg in regs:
-        zipdir(reg,zipf)
+    zipf = zipfile.ZipFile(_zipname, 'w', compression=comp)
+    for _reg in regs:
+        zipdir(_reg,zipf)
     zipf.close()
-    
 
 print('Creating zip file...')
 zipname = 'tikdb.zip'
@@ -186,6 +186,6 @@ print('Zip file created')
 print('Cleaning...')
 # move zip into root and clean up
 shutil.move(zipname, root / zipname)
-os.chdir(root_abs)
-shutil.rmtree(tmpfold,True)
+os.chdir(root)
+shutil.rmtree(tmpfold, ignore_errors=True)
 print('Done - Goodbye!')

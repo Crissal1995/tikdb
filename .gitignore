@@ -6,3 +6,5 @@ vault.tar.gz
 tikdb.zip
 .coverage
 coverage.xml
+*.xml
+*.iml
