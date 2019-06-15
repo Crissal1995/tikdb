@@ -11,7 +11,7 @@ titleids = {'game': base_titleid + '0',
             'update': base_titleid + 'E' }
 
 # setup temp folder
-root = pathlib.Path(os.getcwd())
+root = os.getcwd()
 tmpfold = "tikdb_tmpfold"
 try: 
     os.mkdir(tmpfold)
@@ -186,7 +186,7 @@ print('Zip file created')
 
 print('Cleaning...')
 # move zip into root and clean up
-shutil.move(zipname, root / zipname)
+shutil.move(zipname, os.path.join(root, zipname))
 os.chdir(root)
 shutil.rmtree(tmpfold, ignore_errors=True)
 print('Done - Goodbye!')
