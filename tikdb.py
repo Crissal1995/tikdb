@@ -123,7 +123,7 @@ regs = ['EUR','USA','JPN']
 for reg in regs:
     try: os.mkdir(reg)
     except FileExistsError:
-        print(f"[WARNING] {reg} folder was already created")
+        print("[WARNING] {} folder was already created".format(reg))
         shutil.rmtree(reg,True)
         os.mkdir(reg)
 
