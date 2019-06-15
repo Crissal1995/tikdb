@@ -1,6 +1,6 @@
 [run]
 branch = True
-source = tikdb.py
+source = tikdb
 
 [report]
 exclude_lines =
