@@ -1,5 +1,5 @@
 # tikdb
-![travis_build_badge] [![codecov_badge]](https://codecov.io/gh/Crissal1995/tikdb)
+[![travis_build_badge]](https://travis-ci.com/Crissal1995/tikdb) [![codecov_badge]](https://codecov.io/gh/Crissal1995/tikdb)
 
 A simple script to obtain a zip to be put into WiiU USB Helper.
 ## Requirements
