@@ -1,0 +1,5 @@
+# linguaggio scelto
+language: python
+# prerequisiti
+install:
+  - pip install requests
