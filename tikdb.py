@@ -141,10 +141,9 @@ def match_tiks():
         reg_path = pathlib.Path(a_region)
         name_path = reg_path / a_name
         title_path = name_path / a_tik_name
-        # try: os.mkdir(name_path) # same game can have multiple folders (dlcs and updates)
-        # except FileExistsError: pass
-        # os.mkdir(title_path)
-        os.makedirs(title_path)
+        try: os.mkdir(name_path) # same game can have multiple folders (dlcs and updates)
+        except FileExistsError: pass
+        os.mkdir(title_path)
         shutil.copyfile(tik, title_path / 'title.tik')
     
     for tik in glob.glob('*.tik'):
