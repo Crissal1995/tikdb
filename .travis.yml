@@ -1,5 +1,12 @@
 # linguaggio scelto
 language: python
+# versione del linguaggio
+python:
+  - "3.5"
+  - "3.6"
+  - "3.7"
 # prerequisiti
 install:
   - pip install requests
+# script da eseguire
+script: python3 tikdb.py || python tikdb.py
