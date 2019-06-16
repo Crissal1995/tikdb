@@ -6,6 +6,8 @@ import tarfile
 import zipfile
 import requests
 
+from gurobipy import *
+
 # setup struct for tids
 base_titleid = '0005000'
 titleids = {'game': base_titleid + '0', 'demo': base_titleid + '2',
