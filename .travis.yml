@@ -6,7 +6,7 @@ python:
   - '3.6'
 
 install:
-  - pip install requests coverage codecov
+  - pip install requests coverage codecov mip
 
 script: python tikdb.py
 

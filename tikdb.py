@@ -6,7 +6,7 @@ import tarfile
 import zipfile
 import requests
 
-from gurobipy import *
+from mip.model import *
 
 # setup struct for tids
 base_titleid = '0005000'
