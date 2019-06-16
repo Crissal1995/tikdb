@@ -1,7 +1,11 @@
-import os, glob, pathlib, shutil
-import re
+import os, glob, shutil
 import tarfile, zipfile
 import requests
+
+# debug
+from tkinter import *
+app = Tk()
+app.mainloop()
 
 # setup struct for tids
 base_titleid = '0005000'
