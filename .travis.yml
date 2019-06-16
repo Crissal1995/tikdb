@@ -1,26 +1,13 @@
-dist: xenial  # python 3.7
+dist: xenial
 language: python
 
-matrix:
-  include:
-    - name: 'linux'
-      python:
-        - '3.5'
-        - '3.6'
-        - '3.7'
-      dist: xenial
-    - name: 'mac_os'
-      os: osx
-      osx_image: xcode10.2
-      language: shell
-    - name: 'windows'
-      os: windows
-      language: bash
-      before_install: choco install python
-      env: PATH=/c/Python37:/c/Python37/Scripts:$PATH
+python:
+  - '3.5'
+  - '3.6'
+  - '3.7'
 
 install:
-  - pip3 install --user requests mip coverage codecov
+  - pip3 install requests mip coverage codecov
 
 before_script:
   - SCRIPT=tikdb.py
