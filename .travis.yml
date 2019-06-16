@@ -7,12 +7,13 @@ python:
   - '3.7'
 
 install:
-  - pip3 install requests mip coverage codecov
+  - pip install -r travis_req.txt
+  - pip install -r requirements.txt
 
 before_script:
   - SCRIPT=tikdb.py
 
-script: python3 $SCRIPT || python $SCRIPT
+script: python $SCRIPT
 
 after_success:
   - coverage run $SCRIPT
