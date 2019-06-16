@@ -12,9 +12,9 @@ matrix:
       language: shell
     - name: 'windows'
       os: windows
-      language: shell
+      language: bash
       before_install: choco install python
-      env: PATH=/c/Python37;/c/Python37/Scripts;$PATH
+      env: PATH=/c/Python37:/c/Python37/Scripts:$PATH
 
 install:
   - pip3 install --upgrade pip
