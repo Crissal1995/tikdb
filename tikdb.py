@@ -49,7 +49,7 @@ def parse_titledb():
         else:
             next_title_start, _ = next_title_result.span()
         # parse title
-        title = text[start_title:end_title].upper().replace('-','')
+        title = text[start_title:end_title].upper().replace('-', '')
         # check if title is valid, otherwise skip it
         if title[:8] not in titleids.values():
             result = next_title_result
