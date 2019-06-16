@@ -4,7 +4,10 @@ language: python
 matrix:
   include:
     - name: 'linux'
-      python: '3.7'
+      python:
+        - '3.5'
+        - '3.6'
+        - '3.7'
       dist: xenial
     - name: 'mac_os'
       os: osx
@@ -17,8 +20,7 @@ matrix:
       env: PATH=/c/Python37:/c/Python37/Scripts:$PATH
 
 install:
-  - pip3 install --upgrade pip
-  - pip3 install requests mip coverage codecov
+  - pip3 install --user requests mip coverage codecov
 
 before_script:
   - SCRIPT=tikdb.py
