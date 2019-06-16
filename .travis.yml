@@ -1,4 +1,4 @@
-dist: xenial
+dist: xenial  # python 3.7
 language: python
 
 python:
@@ -7,10 +7,12 @@ python:
   - '3.7'
 
 install:
-  - pip install requests coverage codecov mip
+  - pip install requests mip coverage codecov
 
-script: python tikdb.py
+before_script:
+  - SCRIPT = tikdb.py
+script: python $SCRIPT
 
 after_success:
-  - coverage run tikdb.py
+  - coverage run $SCRIPT
   - codecov
