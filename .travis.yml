@@ -10,7 +10,7 @@ install:
   - pip install requests mip coverage codecov
 
 before_script:
-  - SCRIPT = tikdb.py
+  - SCRIPT=tikdb.py
 script: python $SCRIPT
 
 after_success:
